@@ -12,34 +12,35 @@ import { SharedModule } from '../shared/shared.module';
 import { ProductResolver } from './product-resolver.service';
 import { ProductEditInfoComponent } from './product-edit-info.component';
 import { ProductEditTagsComponent } from './product-edit-tags.component';
+import { AuthGuard } from '../user/auth-guard.service';
+import { ProductEditGuard } from './product-guard.service';
 
 @NgModule({
   imports: [
     SharedModule,
     RouterModule.forChild([
-      { path: 'products', component: ProductListComponent },
       {
-        path: 'products/:id',
-        component: ProductDetailComponent,
-        resolve: { product: ProductResolver }
-      },
-      {
-        path: 'products/:id/edit',
-        component: ProductEditComponent,
-        resolve: { product: ProductResolver },
+        path: 'products',
+        canActivate: [AuthGuard],
         children: [
           {
-            path: '',
-            redirectTo: 'info',
-            pathMatch: 'full'
+            path: '', component: ProductListComponent
           },
           {
-            path: 'info',
-            component: ProductEditInfoComponent
+            path: ':id',
+            component: ProductDetailComponent,
+            resolve: { product: ProductResolver }
           },
           {
-            path: 'tags',
-            component: ProductEditTagsComponent
+            path: ':id/edit',
+            component: ProductEditComponent,
+            canDeactivate: [ProductEditGuard],
+            resolve: { product: ProductResolver },
+            children: [
+              { path: '', redirectTo: 'info', pathMatch: 'full' },
+              { path: 'info', component: ProductEditInfoComponent },
+              { path: 'tags', component: ProductEditTagsComponent }
+            ]
           }
         ]
       }
@@ -56,6 +57,7 @@ import { ProductEditTagsComponent } from './product-edit-tags.component';
   providers: [
     ProductService,
     ProductResolver,
+    ProductEditGuard,
     {
       provide: 'productProvider',
       useValue: () => {
